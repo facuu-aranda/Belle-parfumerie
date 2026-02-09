@@ -12,6 +12,12 @@ export default function CustomCursor() {
     const mq = window.matchMedia("(pointer: fine)");
     if (!mq.matches) return;
 
+    const isTouchDevice =
+      "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    if (isTouchDevice) return;
+
+    if (dotRef.current) dotRef.current.style.display = "block";
+
     const onMove = (e: MouseEvent) => {
       target.current = { x: e.clientX + 14, y: e.clientY + 14 };
     };
@@ -69,7 +75,7 @@ export default function CustomCursor() {
     <div
       ref={dotRef}
       className={`pointer-events-none fixed left-0 top-0 z-[9999] rounded-full transition-[width,height,background-color] duration-200 ease-out ${sizeMap[hovering]} ${colorMap[hovering]} opacity-70`}
-      style={{ willChange: "transform" }}
+      style={{ willChange: "transform", display: "none" }}
     />
   );
 }

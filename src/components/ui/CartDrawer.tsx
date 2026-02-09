@@ -1,14 +1,22 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Minus, ShoppingBag } from "lucide-react";
-import { useCart, getEffectivePrice, getTierLabel } from "@/lib/CartContext";
+import { X, Plus, Minus, ShoppingBag, Droplets, AlertTriangle } from "lucide-react";
+import { useCart, getEffectivePrice, getDecantPrice, getTierLabel } from "@/lib/CartContext";
 import { siteContent } from "@/lib/siteContent";
 import SkeletonImage from "./SkeletonImage";
 
 export default function CartDrawer() {
-  const { items, count, total, tier, isOpen, setIsOpen, removeItem, updateQty, checkout } = useCart();
+  const { items, count, fullCount, total, tier, isOpen, setIsOpen, removeItem, updateQty, checkout, hasDecantWithoutFull } = useCart();
   const t = siteContent.cart;
+
+  const getItemKey = (item: { id: string; itemType: string }) =>
+    item.itemType === "decant" ? `${item.id}__decant` : item.id;
+
+  const getItemPrice = (item: { itemType: string; prices: { unitario: number; mayorista_3: number | null; mayorista_10: number | null } }) =>
+    item.itemType === "decant"
+      ? getDecantPrice(item as Parameters<typeof getDecantPrice>[0])
+      : getEffectivePrice(item.prices, tier);
 
   return (
     <AnimatePresence>
@@ -58,47 +66,69 @@ export default function CartDrawer() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex gap-4 rounded-2xl border border-border bg-background p-3"
-                    >
-                      <SkeletonImage
-                        src={item.image}
-                        alt={item.name}
-                        className="h-20 w-16 shrink-0 rounded-xl"
-                      />
-                      <div className="flex flex-1 flex-col justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">{item.name}</p>
-                          <p className="text-xs text-violet">${getEffectivePrice(item.prices, tier).toLocaleString("es-AR")} c/u</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => updateQty(item.id, item.qty - 1)}
-                            className="flex h-6 w-6 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-lavender-light"
-                          >
-                            <Minus className="h-3 w-3" />
-                          </button>
-                          <span className="min-w-[20px] text-center text-sm font-medium text-foreground">
-                            {item.qty}
-                          </span>
-                          <button
-                            onClick={() => updateQty(item.id, item.qty + 1)}
-                            className="flex h-6 w-6 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-lavender-light"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </button>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="self-start text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+                  {/* Warning banner if decants without full perfume */}
+                  {hasDecantWithoutFull && (
+                    <div className="flex items-start gap-3 rounded-2xl border border-warning/40 bg-warning-light p-3">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+                      <p className="text-xs text-foreground">
+                        Los decants solo se pueden comprar junto con al menos un perfume completo. Agregá un perfume para continuar.
+                      </p>
                     </div>
-                  ))}
+                  )}
+                  {items.map((item) => {
+                    const key = getItemKey(item);
+                    const isDecant = item.itemType === "decant";
+                    const price = getItemPrice(item);
+                    return (
+                      <div
+                        key={key}
+                        className={`flex gap-4 rounded-2xl border p-3 ${isDecant ? "border-lavender/50 bg-lavender-light/30" : "border-border bg-background"}`}
+                      >
+                        <SkeletonImage
+                          src={item.image}
+                          alt={item.name}
+                          className="h-20 w-16 shrink-0 rounded-xl"
+                        />
+                        <div className="flex flex-1 flex-col justify-between">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-semibold text-foreground">{item.name}</p>
+                              {isDecant && (
+                                <span className="inline-flex items-center gap-0.5 rounded-full bg-lavender/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-mauve">
+                                  <Droplets className="h-2.5 w-2.5" />
+                                  Decant
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-violet">${price.toLocaleString("es-AR")} c/u</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => updateQty(key, item.qty - 1)}
+                              className="flex h-6 w-6 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-lavender-light"
+                            >
+                              <Minus className="h-3 w-3" />
+                            </button>
+                            <span className="min-w-[20px] text-center text-sm font-medium text-foreground">
+                              {item.qty}
+                            </span>
+                            <button
+                              onClick={() => updateQty(key, item.qty + 1)}
+                              className="flex h-6 w-6 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-lavender-light"
+                            >
+                              <Plus className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeItem(key)}
+                          className="self-start text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -111,11 +141,18 @@ export default function CartDrawer() {
                   <span className="text-lg font-bold text-foreground">${total.toLocaleString("es-AR")}</span>
                 </div>
                 <p className="mb-4 text-[11px] text-muted-foreground">
-                  {count} unidad{count !== 1 ? "es" : ""} — Precio {getTierLabel(tier)}
+                  {fullCount > 0 && <>{fullCount} perfume{fullCount !== 1 ? "s" : ""} — Precio {getTierLabel(tier)}</>}
+                  {fullCount > 0 && items.some((i) => i.itemType === "decant") && " · "}
+                  {items.some((i) => i.itemType === "decant") && <>Decants: precio fijo</>}
                 </p>
                 <button
                   onClick={checkout}
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-green-600 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-green-700 hover:shadow-lg"
+                  disabled={hasDecantWithoutFull}
+                  className={`flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold transition-all duration-300 ${
+                    hasDecantWithoutFull
+                      ? "cursor-not-allowed bg-gray-300 text-gray-500"
+                      : "bg-green-600 text-white hover:bg-green-700 hover:shadow-lg"
+                  }`}
                   data-cursor="button"
                 >
                   <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current">

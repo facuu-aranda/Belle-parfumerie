@@ -8,7 +8,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type TouchEvent as ReactTouchEvent,
 } from "react";
-import { ShoppingCart, ChevronLeft, ChevronRight, X, Minus, Plus } from "lucide-react";
+import { ShoppingCart, ChevronLeft, ChevronRight, X, Minus, Plus, Droplets } from "lucide-react";
 import { siteContent } from "@/lib/siteContent";
 import { useCart, type CartItemPrices } from "@/lib/CartContext";
 import { useProducts } from "@/hooks/useProducts";
@@ -52,7 +52,7 @@ function clamp(v: number, min: number, max: number) {
    ════════════════════════════════════════════════════════════ */
 export default function Ofertas() {
   const { ofertas } = siteContent;
-  const { addItem, tier: cartTier, count: cartCount } = useCart();
+  const { addItem, addDecant, tier: cartTier, count: cartCount } = useCart();
   const { products: allProducts } = useProducts();
 
   /* ── Carousel state ──────────────────────────────────────── */
@@ -174,6 +174,7 @@ export default function Ofertas() {
     phase: ModalPhase;
   }>(null);
   const [modalQty, setModalQty] = useState(1);
+  const [decantQty, setDecantQty] = useState(1);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const flipContainerRef = useRef<HTMLDivElement>(null);
 
@@ -199,6 +200,7 @@ export default function Ofertas() {
     if (dragRef.current.didDrag) return; // don't open if user was dragging
     const rect = cardEl.getBoundingClientRect();
     setModalQty(1);
+    setDecantQty(1);
     setFlipState({ product, rect, phase: "flip-open" });
   };
 
@@ -307,6 +309,21 @@ export default function Ofertas() {
         name: p.nombre,
         marca: p.marca,
         prices: itemPrices,
+        image: p.imagen ?? "",
+      });
+    }
+  };
+
+  const handleAddDecantFromModal = () => {
+    if (!flipState) return;
+    const p = flipState.product;
+    if (p.precios?.decant == null) return;
+    for (let i = 0; i < decantQty; i++) {
+      addDecant({
+        id: p.id,
+        name: p.nombre,
+        marca: p.marca,
+        prices: { unitario: p.precios.decant, mayorista_3: null, mayorista_10: null },
         image: p.imagen ?? "",
       });
     }
@@ -750,6 +767,49 @@ export default function Ofertas() {
                           <ShoppingCart className="h-4 w-4" />
                           {ofertas.addToCart}
                         </button>
+
+                        {/* Decant option */}
+                        {flipState.product.precios?.decant != null && (
+                          <div className="mt-4 rounded-2xl border border-lavender/40 bg-lavender-light/30 p-4">
+                            <div className="mb-3 flex items-center gap-2">
+                              <Droplets className="h-4 w-4 text-mauve" />
+                              <span className="text-xs font-bold uppercase tracking-wider text-mauve">Decant (5ml)</span>
+                              <span className="ml-auto text-sm font-bold text-violet">
+                                ${flipState.product.precios.decant.toLocaleString("es-AR")}
+                              </span>
+                            </div>
+                            <p className="mb-3 text-[10px] text-muted-foreground">
+                              Precio fijo — no aplica descuento mayorista. Requiere al menos 1 perfume completo.
+                            </p>
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setDecantQty(Math.max(1, decantQty - 1))}
+                                  className="flex h-8 w-8 items-center justify-center rounded-full border border-border transition-colors hover:bg-lavender-light"
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </button>
+                                <span className="min-w-5 text-center text-sm font-bold text-foreground">
+                                  {decantQty}
+                                </span>
+                                <button
+                                  onClick={() => setDecantQty(decantQty + 1)}
+                                  className="flex h-8 w-8 items-center justify-center rounded-full border border-border transition-colors hover:bg-lavender-light"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </button>
+                              </div>
+                              <button
+                                onClick={handleAddDecantFromModal}
+                                className="flex flex-1 items-center justify-center gap-2 rounded-full border border-mauve/40 py-2.5 text-xs font-semibold text-mauve transition-all duration-300 hover:bg-mauve hover:text-white"
+                                data-cursor="button"
+                              >
+                                <Droplets className="h-3.5 w-3.5" />
+                                Agregar decant
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
