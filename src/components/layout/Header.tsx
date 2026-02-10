@@ -62,14 +62,14 @@ export default function Header() {
         {/* Desktop Nav */}
         <nav className="hidden items-center gap-8 lg:flex">
           {nav.links.map((link) => (
-            <a
+            <Link
               key={link.label}
               href={link.href}
               className="text-sm font-medium text-muted-foreground transition-colors duration-250 hover:text-gold"
               data-cursor="link"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -135,14 +135,14 @@ export default function Header() {
           >
             <nav className="flex flex-col gap-1 px-6 py-4">
               {nav.links.map((link) => (
-                <a
+                <Link
                   key={link.label}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
                   className="rounded-xl px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-cream"
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
               <Link
                 href="/catalogo"

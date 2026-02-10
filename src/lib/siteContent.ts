@@ -18,9 +18,9 @@ export const siteContent = {
     links: [
       { label: "Inicio", href: "/" },
       { label: "Catálogo", href: "/catalogo" },
-      { label: "Ofertas", href: "#ofertas" },
-      { label: "FAQ", href: "#faq" },
-      { label: "Contacto", href: "#contacto" },
+      { label: "Ofertas", href: "/#ofertas" },
+      { label: "FAQ", href: "/#faq" },
+      { label: "Contacto", href: "/#contacto" },
     ],
     cta: "Explorar",
   },

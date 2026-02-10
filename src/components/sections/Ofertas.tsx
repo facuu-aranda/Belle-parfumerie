@@ -191,8 +191,13 @@ export default function Ofertas() {
   // Compute modal target geometry
   const getModalGeometry = () => {
     if (typeof window === "undefined") return { w: 700, h: 460, x: 0, y: 0 };
-    const w = clamp(window.innerWidth * 0.85, 340, 780);
-    const h = clamp(window.innerHeight * 0.82, 360, 640);
+    const isMobile = window.innerWidth < 640;
+    const w = isMobile
+      ? clamp(window.innerWidth * 0.94, 300, 420)
+      : clamp(window.innerWidth * 0.85, 340, 780);
+    const h = isMobile
+      ? clamp(window.innerHeight * 0.88, 400, 720)
+      : clamp(window.innerHeight * 0.82, 360, 640);
     return { w, h, x: (window.innerWidth - w) / 2, y: (window.innerHeight - h) / 2 };
   };
 
@@ -424,7 +429,7 @@ export default function Ofertas() {
           >
             {items.map((product, i) => {
               const key = `${product.id}-${i}`;
-              const outOfStock = product.stock <= 0;
+              const outOfStock = !product.stock || product.stock <= 0 || !product.precios?.unitario;
               return (
                 <div
                   key={key}
@@ -630,7 +635,7 @@ export default function Ofertas() {
 
               {/* ── Actual modal content (fades in after flip with blur-out) ── */}
               <div
-                className="absolute inset-0 flex flex-row overflow-hidden rounded-[22px] bg-card shadow-2xl ring-1 ring-border"
+                className="absolute inset-0 flex flex-col overflow-hidden rounded-[22px] bg-card shadow-2xl ring-1 ring-border sm:flex-row"
                 style={{
                   opacity: contentVisible ? 1 : 0,
                   filter: contentVisible ? "blur(0px)" : "blur(12px)",
@@ -638,14 +643,17 @@ export default function Ofertas() {
                   visibility: (flipState?.phase === "flip-open") ? "hidden" : "visible",
                 }}
               >
-                {/* Image — left 40% */}
-                <div className="relative w-2/5 shrink-0 overflow-hidden p-4">
-                  <SkeletonImage
-                    src={flipState.product.imagen ?? ""}
-                    alt={flipState.product.nombre}
-                    className="h-full w-full rounded-xl"
-                  />
-                  <span className="absolute left-7 top-7 rounded-full bg-btn-primary px-3 py-1 text-[11px] font-bold text-btn-primary-text shadow-md">
+                {/* Image — left 40% on desktop, full width on mobile */}
+                <div className="relative flex w-full shrink-0 items-center justify-center p-2.5 sm:pr-0 sm:w-2/5 sm:p-3">
+                  <div className="flex h-44 w-full items-center justify-center overflow-hidden rounded-2xl bg-white  p-3 sm:h-full">
+                    <SkeletonImage
+                      src={flipState.product.imagen ?? ""}
+                      alt={flipState.product.nombre}
+                      className="h-full w-full"
+                      objectFit="contain"
+                    />
+                  </div>
+                  <span className="absolute left-7 top-7 rounded-full bg-btn-primary px-3 py-1 text-[11px] font-bold text-btn-primary-text shadow-md sm:left-8 sm:top-8">
                     {getOfferLabel(flipState.product)}
                   </span>
                 </div>
@@ -658,7 +666,7 @@ export default function Ofertas() {
                         <h3 className="text-xl font-bold text-foreground sm:text-2xl">
                           {flipState.product.nombre}
                         </h3>
-                        {flipState.product.stock <= 0 && (
+                        {(!flipState.product.stock || flipState.product.stock <= 0 || !flipState.product.precios?.unitario) && (
                           <span className="rounded-full bg-black/80 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
                             Sin stock
                           </span>
@@ -735,7 +743,7 @@ export default function Ofertas() {
 
                   {/* Qty + Add to cart */}
                   <div className="border-t border-border pt-5">
-                    {flipState.product.stock <= 0 ? (
+                    {(!flipState.product.stock || flipState.product.stock <= 0 || !flipState.product.precios?.unitario) ? (
                       <p className="text-center text-sm font-semibold text-muted-foreground">Producto sin stock actualmente</p>
                     ) : (
                       <>

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, SlidersHorizontal, X, ShoppingCart, Minus, Plus, Droplets } from "lucide-react";
+import { Search, SlidersHorizontal, X, ShoppingCart, Minus, Plus, Droplets, LayoutGrid, List } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { siteContent } from "@/lib/siteContent";
@@ -31,6 +31,7 @@ export default function CatalogoPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [qty, setQty] = useState(1);
   const [decantQty, setDecantQty] = useState(1);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   /* ── Filter state ── */
   const [fGenero, setFGenero] = useState("Todas");
@@ -97,8 +98,13 @@ export default function CatalogoPage() {
   // Compute modal target geometry
   const getModalGeometry = useCallback(() => {
     if (typeof window === "undefined") return { w: 700, h: 460, x: 0, y: 0 };
-    const w = clamp(window.innerWidth * 0.85, 340, 780);
-    const h = clamp(window.innerHeight * 0.82, 360, 640);
+    const isMobile = window.innerWidth < 640;
+    const w = isMobile
+      ? clamp(window.innerWidth * 0.94, 300, 420)
+      : clamp(window.innerWidth * 0.85, 340, 780);
+    const h = isMobile
+      ? clamp(window.innerHeight * 0.88, 400, 720)
+      : clamp(window.innerHeight * 0.82, 360, 640);
     return { w, h, x: (window.innerWidth - w) / 2, y: (window.innerHeight - h) / 2 };
   }, []);
 
@@ -332,18 +338,37 @@ export default function CatalogoPage() {
                 className="w-full rounded-full border border-border bg-card py-3 pl-11 pr-4 text-sm text-foreground outline-none transition-colors focus:border-violet"
               />
             </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="relative flex items-center gap-2 rounded-full border border-border px-5 py-3 text-sm font-medium text-foreground transition-all hover:border-violet hover:bg-lavender-light"
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              Filtros
-              {activeFilterCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-violet text-[10px] font-bold text-white">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              {/* View mode toggle */}
+              <div className="flex overflow-hidden rounded-full border border-border">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`flex h-11 w-11 items-center justify-center transition-colors ${viewMode === "grid" ? "bg-violet text-white" : "text-muted-foreground hover:bg-lavender-light"}`}
+                  aria-label="Vista cuadrícula"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`flex h-11 w-11 items-center justify-center transition-colors ${viewMode === "list" ? "bg-violet text-white" : "text-muted-foreground hover:bg-lavender-light"}`}
+                  aria-label="Vista lista"
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </div>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="relative flex items-center gap-2 rounded-full border border-border px-5 py-3 text-sm font-medium text-foreground transition-all hover:border-violet hover:bg-lavender-light"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filtros
+                {activeFilterCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-violet text-[10px] font-bold text-white">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Filters panel */}
@@ -441,10 +466,90 @@ export default function CatalogoPage() {
             )}
           </AnimatePresence>
 
-          {/* Product Grid — lazy loaded */}
-          <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {/* Product Grid / List — lazy loaded */}
+          <div className={viewMode === "grid"
+            ? "grid gap-7 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            : "flex flex-col gap-4"
+          }>
             {visibleProducts.map((product) => {
-              const outOfStock = product.stock <= 0;
+              const outOfStock = !product.stock || product.stock <= 0 || !product.precios?.unitario;
+
+              /* ── List row ── */
+              if (viewMode === "list") {
+                return (
+                  <div
+                    key={product.id}
+                    ref={(el) => { if (el) cardRefs.current.set(product.id, el); }}
+                    onClick={() => {
+                      const el = cardRefs.current.get(product.id);
+                      if (el) openFlip(product, el);
+                    }}
+                    className="group flex cursor-pointer items-center gap-5 rounded-2xl bg-card p-3 shadow-md ring-1 ring-border transition-all duration-300 hover:shadow-xl hover:shadow-violet/20"
+                    data-cursor="card"
+                  >
+                    {/* Thumbnail — hidden on mobile */}
+                    <div className={`relative hidden h-24 w-20 shrink-0 overflow-hidden rounded-xl transition-[filter] duration-500 sm:block ${outOfStock ? "grayscale group-hover:grayscale-0" : ""}`}>
+                      <SkeletonImage
+                        src={product.imagen ?? ""}
+                        alt={product.nombre}
+                        className="h-full w-full"
+                      />
+                      {outOfStock && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                          <span className="rounded-full bg-black/70 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">Sin stock</span>
+                        </div>
+                      )}
+                    </div>
+                    {/* Info */}
+                    <div className="flex flex-1 flex-col gap-0.5">
+                      <h3 className="text-sm font-semibold text-foreground">{product.nombre}</h3>
+                      <p className="text-xs text-violet">{product.marca} · {product.concentracion ?? ""} · {product.volumen ?? ""}</p>
+                      <div className="mt-1 flex items-center gap-3">
+                        <span className="text-base font-bold text-violet">
+                          {product.precios?.unitario != null ? `$${product.precios.unitario.toLocaleString("es-AR")}` : "—"}
+                        </span>
+                        {/* Wholesale prices hidden on mobile */}
+                        {product.precios?.mayorista_3 != null && (
+                          <span className="hidden text-[10px] text-muted-foreground sm:inline">3+ → ${product.precios.mayorista_3.toLocaleString("es-AR")}</span>
+                        )}
+                        {product.precios?.mayorista_10 != null && (
+                          <span className="hidden text-[10px] text-muted-foreground sm:inline">10+ → ${product.precios.mayorista_10.toLocaleString("es-AR")}</span>
+                        )}
+                      </div>
+                    </div>
+                    {/* Add to cart — icon only on mobile */}
+                    <button
+                      disabled={outOfStock}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addItem({
+                          id: product.id,
+                          name: product.nombre,
+                          marca: product.marca,
+                          prices: {
+                            unitario: product.precios?.unitario ?? 0,
+                            mayorista_3: product.precios?.mayorista_3 ?? null,
+                            mayorista_10: product.precios?.mayorista_10 ?? null,
+                          },
+                          image: product.imagen ?? "",
+                        });
+                      }}
+                      className={`flex shrink-0 items-center justify-center gap-2 rounded-full transition-all duration-300 ${
+                        outOfStock
+                          ? "cursor-not-allowed border border-border text-muted-foreground"
+                          : "border border-violet/30 text-violet hover:bg-btn-primary hover:text-btn-primary-text hover:shadow-lg hover:shadow-violet/20"
+                      } h-10 w-10 sm:h-auto sm:w-auto sm:px-4 sm:py-2.5`}
+                      data-cursor={outOfStock ? undefined : "button"}
+                      aria-label={outOfStock ? "Sin stock" : catalogo.addToCart}
+                    >
+                      <ShoppingCart className="h-3.5 w-3.5" />
+                      <span className="hidden text-xs font-semibold sm:inline">{outOfStock ? "Sin stock" : catalogo.addToCart}</span>
+                    </button>
+                  </div>
+                );
+              }
+
+              /* ── Grid card ── */
               return (
                 <div
                   key={product.id}
@@ -671,7 +776,7 @@ export default function CatalogoPage() {
 
               {/* ── Actual modal content (fades in after flip with blur-out) ── */}
               <div
-                className="absolute inset-0 flex flex-row overflow-hidden rounded-[22px] bg-card shadow-2xl ring-1 ring-border"
+                className="absolute inset-0 flex flex-col overflow-hidden rounded-[22px] bg-card shadow-2xl ring-1 ring-border sm:flex-row"
                 style={{
                   opacity: contentVisible ? 1 : 0,
                   filter: contentVisible ? "blur(0px)" : "blur(12px)",
@@ -679,15 +784,18 @@ export default function CatalogoPage() {
                   visibility: (flipState?.phase === "flip-open") ? "hidden" : "visible",
                 }}
               >
-                {/* Image — left 40% */}
-                <div className="relative w-2/5 shrink-0 overflow-hidden p-4">
-                  <SkeletonImage
-                    src={flipState.product.imagen ?? ""}
-                    alt={flipState.product.nombre}
-                    className="h-full w-full rounded-xl"
-                  />
+                {/* Image — left 40% on desktop, full width on mobile */}
+                <div className="relative flex w-full shrink-0 items-center justify-center p-2.5 sm:w-2/5 sm:p-3">
+                  <div className="flex h-44 w-full items-center justify-center overflow-hidden rounded-2xl ring-1 ring-border p-3 sm:h-full">
+                    <SkeletonImage
+                      src={flipState.product.imagen ?? ""}
+                      alt={flipState.product.nombre}
+                      className="h-full w-full"
+                      objectFit="contain"
+                    />
+                  </div>
                   {flipState.product.label && (
-                    <span className="absolute left-7 top-7 rounded-full bg-btn-primary px-3 py-1 text-[11px] font-bold text-btn-primary-text shadow-md">
+                    <span className="absolute left-7 top-7 rounded-full bg-btn-primary px-3 py-1 text-[11px] font-bold text-btn-primary-text shadow-md sm:left-8 sm:top-8">
                       {flipState.product.label}
                     </span>
                   )}
@@ -701,7 +809,7 @@ export default function CatalogoPage() {
                         <h3 className="text-xl font-bold text-foreground sm:text-2xl">
                           {flipState.product.nombre}
                         </h3>
-                        {flipState.product.stock <= 0 && (
+                        {(!flipState.product.stock || flipState.product.stock <= 0 || !flipState.product.precios?.unitario) && (
                           <span className="rounded-full bg-black/80 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
                             Sin stock
                           </span>
@@ -761,7 +869,7 @@ export default function CatalogoPage() {
 
                   {/* Qty + Add to cart */}
                   <div className="border-t border-border pt-5">
-                    {flipState.product.stock <= 0 ? (
+                    {(!flipState.product.stock || flipState.product.stock <= 0 || !flipState.product.precios?.unitario) ? (
                       <p className="text-center text-sm font-semibold text-muted-foreground">Producto sin stock actualmente</p>
                     ) : (
                       <>

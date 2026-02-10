@@ -75,13 +75,19 @@ export default function CartDrawer() {
                       </p>
                     </div>
                   )}
+                  <AnimatePresence initial={false}>
                   {items.map((item) => {
                     const key = getItemKey(item);
                     const isDecant = item.itemType === "decant";
                     const price = getItemPrice(item);
                     return (
-                      <div
+                      <motion.div
                         key={key}
+                        layout
+                        initial={{ opacity: 1, x: 0, height: "auto" }}
+                        animate={{ opacity: 1, x: 0, height: "auto" }}
+                        exit={{ opacity: 0, x: 80, height: 0, marginBottom: 0, padding: 0, overflow: "hidden" }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
                         className={`flex gap-4 rounded-2xl border p-3 ${isDecant ? "border-lavender/50 bg-lavender-light/30" : "border-border bg-background"}`}
                       >
                         <SkeletonImage
@@ -126,9 +132,10 @@ export default function CartDrawer() {
                         >
                           <X className="h-4 w-4" />
                         </button>
-                      </div>
+                      </motion.div>
                     );
                   })}
+                  </AnimatePresence>
                 </div>
               )}
             </div>

@@ -6,9 +6,10 @@ interface SkeletonImageProps {
   src: string;
   alt: string;
   className?: string;
+  objectFit?: "cover" | "contain";
 }
 
-export default function SkeletonImage({ src, alt, className = "" }: SkeletonImageProps) {
+export default function SkeletonImage({ src, alt, className = "", objectFit = "cover" }: SkeletonImageProps) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
 
@@ -31,9 +32,9 @@ export default function SkeletonImage({ src, alt, className = "" }: SkeletonImag
         <img
           src={src}
           alt={alt}
-          className={`h-full w-full object-cover transition-opacity duration-500 ${
-            loaded ? "opacity-100" : "opacity-0"
-          }`}
+          className={`h-full w-full transition-opacity duration-500 ${
+            objectFit === "contain" ? "object-contain" : "object-cover"
+          } ${loaded ? "opacity-100" : "opacity-0"}`}
           onLoad={() => setLoaded(true)}
           onError={() => setError(true)}
         />

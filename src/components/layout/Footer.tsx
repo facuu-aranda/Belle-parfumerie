@@ -7,7 +7,7 @@ export default function Footer() {
   return (
     <footer className="bg-footer-bg text-white">
       <div className="mx-auto max-w-7xl px-6 py-16">
-        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
           {/* Brand */}
           <div>
             <div className="mb-4 flex items-center gap-2.5">
@@ -37,22 +37,6 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               {footer.columns.nav.links.map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-sm text-white/60 transition-colors hover:text-white">
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Colecciones */}
-          <div>
-            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gold-light">
-              {footer.columns.collections.title}
-            </h4>
-            <ul className="space-y-3">
-              {footer.columns.collections.links.map((link) => (
                 <li key={link}>
                   <a href="#" className="text-sm text-white/60 transition-colors hover:text-white">
                     {link}
