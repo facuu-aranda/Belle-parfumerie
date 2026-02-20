@@ -28,7 +28,7 @@ export default function PerfumeCatalog() {
               <motion.div
                 whileHover={{ scale: 1.04 }}
                 transition={{ duration: 0.3 }}
-                className="group cursor-pointer overflow-hidden rounded-[22px] bg-card shadow-md shadow-rose/10 ring-1 ring-border transition-shadow duration-300 hover:shadow-xl hover:shadow-gold/15"
+                className="group cursor-pointer overflow-hidden rounded-[22px] bg-card shadow-md shadow-rose/10 transition-shadow duration-300 hover:shadow-xl hover:shadow-gold/15"
                 data-cursor="card"
               >
                 {/* Image */}

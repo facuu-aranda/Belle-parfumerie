@@ -400,7 +400,7 @@ export default function Ofertas() {
       {/* ── Carousel viewport ──────────────────────────────── */}
       {/* overflow-x clips horizontally, but py-8 + overflow-y-visible
           ensures cards + shadows + scale are never clipped vertically */}
-      <div className="ofertas-viewport relative" style={{ overflowX: 'clip', overflowY: 'visible' }}>
+      <div className="ofertas-viewport relative mx-auto max-w-7xl px-6" style={{ overflowX: 'clip', overflowY: 'visible' }}>
         {/* Fade masks */}
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-rose-light to-transparent sm:w-24" />
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-rose-light to-transparent sm:w-24" />
@@ -539,7 +539,7 @@ export default function Ofertas() {
           >
             {/* ── FRONT face (card replica) ── */}
             <div
-              className="absolute inset-0 overflow-hidden rounded-[22px] bg-card shadow-xl ring-1 ring-border"
+              className="absolute inset-0 overflow-hidden rounded-[22px] bg-card shadow-xl "
               style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
             >
               <div className="relative h-3/5 overflow-hidden">
@@ -548,7 +548,7 @@ export default function Ofertas() {
                   alt={flipState.product.nombre}
                   className="h-full w-full"
                 />
-                <span className="absolute left-3 top-3 rounded-full bg-btn-primary px-3 py-1 text-[11px] font-bold text-btn-primary-text shadow-md">
+                <span className="absolute left-3 top-3 rounded-full bg-btn-primary py-1 text-[11px] font-bold text-btn-primary-text shadow-md">
                   {getOfferLabel(flipState.product)}
                 </span>
               </div>
@@ -644,8 +644,8 @@ export default function Ofertas() {
                 }}
               >
                 {/* Image — left 40% on desktop, full width on mobile */}
-                <div className="relative flex w-full shrink-0 items-center justify-center p-2.5 sm:pr-0 sm:w-2/5 sm:p-3">
-                  <div className="flex h-44 w-full items-center justify-center overflow-hidden rounded-2xl bg-white  p-3 sm:h-full">
+                <div className="relative flex w-full shrink-0 items-center justify-center py-2.5 sm:pr-0 sm:w-2/5 sm:p-3">
+                  <div className="flex h-44 w-full items-center justify-center overflow-hidden rounded-2xl bg-white  py-3 sm:h-full">
                     <SkeletonImage
                       src={flipState.product.imagen ?? ""}
                       alt={flipState.product.nombre}
